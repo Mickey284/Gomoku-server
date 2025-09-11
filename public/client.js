@@ -182,7 +182,12 @@ function initSocketConnection(roomId = null) {
         highlightCurrentRoom();
         
         // 更新房间标题
-        document.getElementById('room-title').textContent = room.name;
+        if (document.getElementById('room-title')) {
+            document.getElementById('room-title').textContent = room.name;
+        } else {
+            // 如果在大厅页面，需要跳转到房间页面
+            window.location.href = `room.html?roomId=${room.id}`;
+        }
     });
     
     // 房间离开成功
@@ -433,7 +438,11 @@ function joinRoomById(roomId) {
 function leaveRoom() {
     if (currentRoom) {
         socket.emit('leave-room', currentRoom.id);
+        // 直接跳转到主页而不是等待服务器响应
+        window.location.href = 'index.html';
     } else {
         alert('你当前不在任何房间中');
+        // 即使不在房间中也返回主页
+        window.location.href = 'index.html';
     }
 }
