@@ -295,13 +295,18 @@ header {
   background: #fafafa;
   margin-bottom: 15px;
   min-height: 300px;
+  display: flex;
+  flex-direction: column;
 }
 
 .message {
-  padding: 10px;
+  padding: 10px 15px;
   margin-bottom: 10px;
-  border-radius: 8px;
+  border-radius: 18px;
   animation: fadeIn 0.3s ease;
+  max-width: 80%;
+  word-wrap: break-word;
+  align-self: flex-start;
 }
 
 @keyframes fadeIn {
@@ -311,22 +316,40 @@ header {
 
 .server-message {
   background: #e3f2fd;
-  border-left: 4px solid var(--primary);
+  border-left: none;
+  align-self: center;
+  max-width: 100%;
+  text-align: center;
+  font-size: 0.9em;
+  opacity: 0.8;
+  padding: 5px 10px;
 }
 
 .client-message {
-  background: #e8f5e9;
-  border-left: 4px solid var(--success);
+  background: #2ecc71;
+  color: white;
+  border-left: none;
+  align-self: flex-end;
+  border-bottom-right-radius: 5px;
+}
+
+.other-player-message {
+  background: #e91e63;
+  color: white;
+  border-left: none;
+  align-self: flex-start;
+  border-bottom-left-radius: 5px;
 }
 
 .system-message {
   background: #fff3e0;
-  border-left: 4px solid var(--warning);
-}
-
-.other-player-message {
-  background: #ffebee;
-  border-left: 4px solid #e91e63;
+  border-left: none;
+  align-self: center;
+  max-width: 100%;
+  text-align: center;
+  font-size: 0.9em;
+  opacity: 0.8;
+  padding: 5px 10px;
 }
 
 .message-input {
@@ -349,7 +372,6 @@ header {
   box-shadow: 0 0 0 2px rgba(52, 152, 219, 0.2);
 }
 
-.players-list {
   background: white;
   border-radius: 8px;
   padding: 15px;

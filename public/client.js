@@ -54,20 +54,24 @@ function initRoomPage() {
 // 初始化Socket连接
 function initSocketConnection(roomId = null) {
     updateStatus('正在连接服务器...', '#f39c12');
-    
+
+    // 创建随机水果名作为用户名
+    const fruits = ['Apple', 'Banana', 'Cherry', 'Date', 'Elderberry', 'Fig', 'Grape', 'Honeydew', 'Icaco', 'Jackfruit'];
+    username = fruits[Math.floor(Math.random() * fruits.length)];
+
     // 创建Socket.IO连接
     const serverUrl = window.location.hostname === 'localhost' 
         ? 'http://localhost:8080' 
         : `http://${window.location.hostname}:8080`;
-    
+
     const query = {
         username: username
     };
-    
+
     if (roomId) {
         query.roomId = roomId;
     }
-    
+
     socket = io(serverUrl, {
         reconnection: true,
         reconnectionAttempts: 5,
@@ -76,23 +80,23 @@ function initSocketConnection(roomId = null) {
         transports: ['websocket', 'polling'],
         query: query
     });
-    
+
     // 连接成功
     socket.on('connect', () => {
-        connectionId = socket.id;
+        connectionId = username; // 使用水果名作为连接ID
         updateStatus('连接成功', '#2ecc71');
         document.querySelector('.status-indicator').classList.add('connected');
         document.getElementById('connection-id').textContent = connectionId;
-        
+
         addMessage('系统', '已连接到服务器', 'system');
     });
-    
+
     // 连接错误
     socket.on('connect_error', (error) => {
         updateStatus(`连接错误: ${error.message || error}`, '#e74c3c');
         document.querySelector('.status-indicator').classList.remove('connected');
     });
-    
+
     // 断开连接
     socket.on('disconnect', (reason) => {
         if (reason === 'io server disconnect') {
@@ -101,86 +105,88 @@ function initSocketConnection(roomId = null) {
             updateStatus('已断开连接', '#e74c3c');
         }
         document.querySelector('.status-indicator').classList.remove('connected');
-        
+
         addMessage('系统', '连接已断开', 'system');
     });
-    
+
     // 尝试重连
     socket.on('reconnect_attempt', (attempt) => {
         updateStatus(`尝试重新连接 (${attempt}/5)`, '#f39c12');
     });
-    
+
     // 重连成功
     socket.on('reconnect', () => {
         updateStatus('重新连接成功', '#2ecc71');
         connectionId = socket.id;
         document.getElementById('connection-id').textContent = connectionId;
         document.querySelector('.status-indicator').classList.add('connected');
-        
+
         addMessage('系统', '重新连接成功', 'system');
-        
+
         // 重新加入房间（如果之前在一个房间中）
         if (currentRoom) {
             joinRoomById(currentRoom.id);
         }
     });
-    
+
     // 服务器消息处理
     socket.on('server-message', (data) => {
         if (data.type === 'welcome') {
-            addMessage('服务器', data.message, 'server');
+            addMessage('服务器', data.message, 'system');
         } else if (data.type === 'response') {
-            addMessage('服务器', data.message, 'server');
+            addMessage('服务器', data.message, 'system');
         } else if (data.type === 'broadcast') {
-            // 处理来自其他玩家的消息
+            // 处理来自其他玩家的消息，不再添加自己的消息
             if (data.sender !== socket.id) {
                 addMessage(data.senderName, data.message, 'other-player-message');
             }
         } else if (data.type === 'room-message') {
-            // 房间内的消息
-            addMessage(data.senderName, data.message, 'other-player-message');
+            // 房间内的消息，不再添加自己的消息
+            if (data.sender !== socket.id) {
+                addMessage(data.senderName, data.message, 'other-player-message');
+            }
         }
     });
-    
+
     // 在线玩家更新
     socket.on('player-count', (count) => {
         // 不再需要此功能
     });
-    
+
     // 玩家列表更新
     socket.on('player-list', (players) => {
         updatePlayerList(players);
     });
-    
+
     // 玩家加入通知
     socket.on('player-joined', (player) => {
         addMessage('系统', `${player.username} 加入了游戏`, 'system');
         updatePlayerList([player]);
     });
-    
+
     // 玩家离开通知
     socket.on('player-left', (player) => {
         addMessage('系统', `${player.username} 离开了游戏`, 'system');
         removePlayerFromList(player.id);
     });
-    
+
     // 房间创建成功
     socket.on('room-created', (room) => {
         addMessage('系统', `房间 "${room.name}" 创建成功!`, 'system');
         currentRoom = room;
         updateRoomList([room]);
         highlightCurrentRoom();
-        
+
         // 重定向到房间页面
         window.location.href = `room.html?roomId=${room.id}`;
     });
-    
+
     // 房间加入成功
     socket.on('room-joined', (room) => {
         addMessage('系统', `你已加入房间 "${room.name}"`, 'system');
         currentRoom = room;
         highlightCurrentRoom();
-        
+
         // 更新房间标题
         if (document.getElementById('room-title')) {
             document.getElementById('room-title').textContent = room.name;
@@ -189,23 +195,23 @@ function initSocketConnection(roomId = null) {
             window.location.href = `room.html?roomId=${room.id}`;
         }
     });
-    
+
     // 房间离开成功
     socket.on('room-left', () => {
         addMessage('系统', `你已离开房间`, 'system');
         currentRoom = null;
         highlightCurrentRoom();
-        
+
         // 返回大厅
         window.location.href = 'index.html';
     });
-    
+
     // 房间列表更新
     socket.on('room-list', (rooms) => {
         updateRoomList(rooms);
         highlightCurrentRoom();
     });
-    
+
     // 房间玩家更新
     socket.on('room-players-updated', (room) => {
         if (currentRoom && currentRoom.id === room.id) {
@@ -220,7 +226,7 @@ function initSocketConnection(roomId = null) {
 function initGameBoard() {
     const gameBoard = document.getElementById('game-board');
     gameBoard.innerHTML = '';
-    
+
     for (let i = 0; i < 15; i++) {
         for (let j = 0; j < 15; j++) {
             const cell = document.createElement('div');
@@ -237,9 +243,9 @@ function initGameBoard() {
 function handleCellClick(e) {
     const row = e.target.dataset.row;
     const col = e.target.dataset.col;
-    
+
     if (!currentRoom) return;
-    
+
     // 发送落子信息到服务器
     socket.emit('game-move', {
         roomId: currentRoom.id,
@@ -253,7 +259,7 @@ function handleCellClick(e) {
 function updatePlayerList(players) {
     const playersList = document.getElementById('players-list');
     playersList.innerHTML = '';
-    
+
     players.forEach(player => {
         const playerElement = document.createElement('div');
         playerElement.className = 'player-item';
@@ -269,17 +275,17 @@ function updatePlayerList(players) {
 // 更新房间列表
 function updateRoomList(rooms) {
     const roomList = document.getElementById('room-list');
-    
+
     // 如果房间列表为空，显示提示
     if (rooms.length === 0) {
         roomList.innerHTML = '<div class="room-item"><div class="room-info"><div class="room-name">暂无可用房间</div><div class="room-players">请创建新房间</div></div></div>';
         return;
     }
-    
+
     // 更新或添加房间
     rooms.forEach(room => {
         let roomElement = document.querySelector(`.room-item[data-id="${room.id}"]`);
-        
+
         if (!roomElement) {
             roomElement = document.createElement('div');
             roomElement.className = 'room-item';
@@ -294,7 +300,7 @@ function updateRoomList(rooms) {
                 </div>
             `;
             roomList.appendChild(roomElement);
-            
+
             // 添加点击事件
             roomElement.addEventListener('click', () => {
                 joinRoomById(room.id);
@@ -306,7 +312,7 @@ function updateRoomList(rooms) {
                 <div class="room-name">${room.name}</div>
                 <div class="room-players">玩家: ${room.players.length}/${room.maxPlayers || 4}</div>
             `;
-            
+
             const roomStatus = roomElement.querySelector('.room-status');
             roomStatus.className = `room-status ${room.players.length < (room.maxPlayers || 4) ? 'available' : 'full'}`;
             roomStatus.textContent = room.players.length < (room.maxPlayers || 4) ? '可用' : '已满';
@@ -320,7 +326,7 @@ function highlightCurrentRoom() {
     document.querySelectorAll('.room-item').forEach(item => {
         item.classList.remove('active');
     });
-    
+
     // 高亮当前房间
     if (currentRoom) {
         const currentRoomElement = document.querySelector(`.room-item[data-id="${currentRoom.id}"]`);
@@ -349,24 +355,36 @@ function updateStatus(text, color = '#333') {
 function addMessage(sender, message, type = 'server') {
     const log = document.getElementById('message-log');
     if (!log) return;
-    
+
     const messageElement = document.createElement('div');
-    
     messageElement.classList.add('message');
+
     if (type === 'server') {
         messageElement.classList.add('server-message');
         messageElement.innerHTML = `<strong>${sender}:</strong> ${message}`;
     } else if (type === 'client') {
+        // 自己发送的消息样式
         messageElement.classList.add('client-message');
         messageElement.innerHTML = `<strong>${sender}:</strong> ${message}`;
+        messageElement.style.cssFloat = 'right';
+        messageElement.style.clear = 'both';
+        messageElement.style.textAlign = 'right';
+        messageElement.style.marginLeft = 'auto';
+        messageElement.style.marginRight = '0';
     } else if (type === 'other-player-message') {
+        // 其他玩家消息样式
         messageElement.classList.add('other-player-message');
         messageElement.innerHTML = `<strong>${sender}:</strong> ${message}`;
     } else {
+        // 系统消息样式
         messageElement.classList.add('system-message');
         messageElement.innerHTML = `<strong>${sender}:</strong> ${message}`;
+        messageElement.style.fontSize = '0.9em';
+        messageElement.style.opacity = '0.8';
+        messageElement.style.backgroundColor = '#f0f0f0';
+        messageElement.style.borderLeft = '4px solid #ccc';
     }
-    
+
     log.appendChild(messageElement);
     log.scrollTop = log.scrollHeight;
 }
@@ -375,10 +393,10 @@ function addMessage(sender, message, type = 'server') {
 function sendMessage() {
     const input = document.getElementById('message-input');
     const message = input.value.trim();
-    
+
     if (message) {
         const sentTime = new Date().getTime();
-        
+
         if (currentRoom) {
             // 发送房间消息
             socket.emit('room-message', {
@@ -393,7 +411,8 @@ function sendMessage() {
                 sentTime: sentTime 
             });
         }
-        
+
+        // 仅添加一次消息，不再重复添加
         addMessage('你', message, 'client');
         input.value = '';
         input.focus();
@@ -404,7 +423,7 @@ function sendMessage() {
 function createRoom() {
     const roomNameInput = document.getElementById('room-name-input');
     const roomName = roomNameInput.value.trim();
-    
+
     if (roomName) {
         socket.emit('create-room', {
             name: roomName,
@@ -420,7 +439,7 @@ function createRoom() {
 function joinRoom() {
     const roomIdInput = document.getElementById('join-room-input');
     const roomId = roomIdInput.value.trim();
-    
+
     if (roomId) {
         joinRoomById(roomId);
         roomIdInput.value = '';
@@ -441,7 +460,6 @@ function leaveRoom() {
         // 直接跳转到主页而不是等待服务器响应
         window.location.href = 'index.html';
     } else {
-        alert('你当前不在任何房间中');
         // 即使不在房间中也返回主页
         window.location.href = 'index.html';
     }
