@@ -1,0 +1,81 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>多人游戏平台 - 房间</title>
+    <script src="https://cdn.socket.io/4.7.4/socket.io.min.js"></script>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <div class="container">
+        <header>
+            <div class="logo">多人游戏平台</div>
+            <div class="subtitle">游戏房间</div>
+        </header>
+        
+        <div class="status-bar">
+            <div>
+                <span class="status-indicator"></span>
+                <span id="server-status">正在连接服务器...</span>
+            </div>
+            <div>
+                连接ID: <span id="connection-id" class="connection-id">未连接</span>
+            </div>
+        </div>
+        
+        <div class="main-content">
+            <div class="room-header">
+                <div class="room-title" id="room-title">房间名称</div>
+                <button class="btn btn-danger" onclick="leaveRoom()">离开房间</button>
+            </div>
+            
+            <div class="room-content">
+                <div class="game-area">
+                    <h3>五子棋对战</h3>
+                    <div class="game-board" id="game-board">
+                        <!-- 游戏棋盘将由JS动态生成 -->
+                    </div>
+                    <div class="game-status" id="game-status">等待玩家加入...</div>
+                </div>
+                
+                <div class="chat-area">
+                    <h3>房间聊天</h3>
+                    <div class="message-log" id="message-log">
+                        <div class="message system-message">
+                            <strong>系统:</strong> 欢迎进入房间聊天
+                        </div>
+                    </div>
+                    
+                    <div class="message-input">
+                        <input type="text" id="message-input" placeholder="输入消息...">
+                        <button class="btn btn-primary" onclick="sendMessage()">发送</button>
+                    </div>
+                </div>
+                
+                <div class="players-list">
+                    <h3>房间玩家</h3>
+                    <div id="players-list">
+                        <div class="player-item">
+                            <div class="player-status"></div>
+                            <span>加载中...</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <footer>
+            <p>多人游戏平台实时通信系统 &copy; 2025 | 专注于多人游戏体验</p>
+        </footer>
+    </div>
+
+    <script src="client.js"></script>
+    <script>
+        // 房间页面初始化
+        document.addEventListener('DOMContentLoaded', () => {
+            initRoomPage();
+        });
+    </script>
+</body>
+</html>

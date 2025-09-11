@@ -1,0 +1,398 @@
+:root {
+  --primary: #3498db;
+  --success: #2ecc71;
+  --warning: #f39c12;
+  --danger: #e74c3c;
+  --dark: #2c3e50;
+  --light: #ecf0f1;
+  --room-bg: #f8f9fa;
+  --room-active: #e3f2fd;
+}
+
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+  font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+}
+
+body {
+  background: linear-gradient(135deg, #1a2a6c, #b21f1f, #fdbb2d);
+  color: #333;
+  min-height: 100vh;
+  padding: 20px;
+}
+
+.container {
+  max-width: 1200px;
+  margin: 0 auto;
+  background: rgba(255, 255, 255, 0.95);
+  border-radius: 15px;
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
+  overflow: hidden;
+}
+
+header {
+  background: var(--dark);
+  color: white;
+  padding: 20px;
+  text-align: center;
+}
+
+.logo {
+  font-size: 2.5rem;
+  font-weight: bold;
+  margin-bottom: 10px;
+  color: var(--primary);
+}
+
+.subtitle {
+  font-size: 1.2rem;
+  opacity: 0.8;
+}
+
+.status-bar {
+  display: flex;
+  justify-content: space-between;
+  background: #34495e;
+  padding: 15px 20px;
+  color: white;
+  font-size: 1.1rem;
+}
+
+.status-indicator {
+  display: inline-block;
+  width: 12px;
+  height: 12px;
+  border-radius: 50%;
+  background: var(--danger);
+  margin-right: 8px;
+}
+
+.status-indicator.connected {
+  background: var(--success);
+  box-shadow: 0 0 8px var(--success);
+}
+
+.connection-id {
+  font-weight: bold;
+  color: var(--primary);
+}
+
+.main-content {
+  padding: 30px;
+  min-height: 500px;
+}
+
+.panel {
+  background: white;
+  border-radius: 10px;
+  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+  padding: 25px;
+  margin-bottom: 25px;
+}
+
+.panel-title {
+  font-size: 1.5rem;
+  margin-bottom: 20px;
+  padding-bottom: 15px;
+  border-bottom: 2px solid var(--light);
+  color: var(--dark);
+}
+
+.btn {
+  padding: 12px 20px;
+  border: none;
+  border-radius: 8px;
+  font-size: 1rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.3s;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.btn-primary {
+  background: var(--primary);
+  color: white;
+}
+
+.btn-success {
+  background: var(--success);
+  color: white;
+}
+
+.btn-warning {
+  background: var(--warning);
+  color: white;
+}
+
+.btn-danger {
+  background: var(--danger);
+  color: white;
+}
+
+.btn:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.2);
+}
+
+.btn:active {
+  transform: translateY(0);
+}
+
+.lobby-controls {
+  display: flex;
+  flex-direction: column;
+  gap: 15px;
+  margin-bottom: 20px;
+}
+
+.room-input {
+  display: flex;
+  gap: 10px;
+}
+
+.room-input input {
+  flex: 1;
+  padding: 12px 15px;
+  border: 2px solid #ddd;
+  border-radius: 8px;
+  font-size: 1rem;
+}
+
+.room-list {
+  margin-top: 20px;
+  max-height: 400px;
+  overflow-y: auto;
+}
+
+.room-item {
+  padding: 15px;
+  border-radius: 8px;
+  background: white;
+  margin-bottom: 10px;
+  box-shadow: 0 2px 5px rgba(0,0,0,0.05);
+  cursor: pointer;
+  transition: all 0.3s;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.room-item:hover {
+  background: var(--room-active);
+  transform: translateY(-2px);
+  box-shadow: 0 4px 10px rgba(0,0,0,0.1);
+}
+
+.room-info {
+  flex: 1;
+}
+
+.room-name {
+  font-weight: bold;
+  font-size: 1.1rem;
+  margin-bottom: 5px;
+}
+
+.room-players {
+  font-size: 0.9rem;
+  color: #7f8c8d;
+}
+
+.room-status {
+  padding: 5px 10px;
+  border-radius: 15px;
+  font-size: 0.8rem;
+  font-weight: bold;
+}
+
+.room-status.available {
+  background: #e8f5e9;
+  color: var(--success);
+}
+
+.room-status.full {
+  background: #ffebee;
+  color: var(--danger);
+}
+
+.room-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 15px;
+  background: var(--primary);
+  color: white;
+  border-radius: 8px;
+  margin-bottom: 20px;
+}
+
+.room-title {
+  font-size: 1.5rem;
+  font-weight: bold;
+}
+
+.room-content {
+  display: flex;
+  gap: 20px;
+  flex-wrap: wrap;
+}
+
+.game-area {
+  flex: 2;
+  min-width: 300px;
+  background: #f0f8ff;
+  border-radius: 8px;
+  padding: 20px;
+  min-height: 400px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+}
+
+.game-board {
+  width: 300px;
+  height: 300px;
+  background: #e6f7ff;
+  border: 2px solid var(--primary);
+  display: grid;
+  grid-template-columns: repeat(15, 1fr);
+  grid-template-rows: repeat(15, 1fr);
+}
+
+.game-cell {
+  border: 1px solid #b3e0ff;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+}
+
+.game-cell:hover {
+  background: #d9f0ff;
+}
+
+.chat-area {
+  flex: 1;
+  min-width: 300px;
+  background: white;
+  border-radius: 8px;
+  padding: 20px;
+  display: flex;
+  flex-direction: column;
+}
+
+.message-log {
+  flex: 1;
+  overflow-y: auto;
+  border: 1px solid #ddd;
+  border-radius: 8px;
+  padding: 15px;
+  background: #fafafa;
+  margin-bottom: 15px;
+  min-height: 300px;
+}
+
+.message {
+  padding: 10px;
+  margin-bottom: 10px;
+  border-radius: 8px;
+  animation: fadeIn 0.3s ease;
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; transform: translateY(10px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+.server-message {
+  background: #e3f2fd;
+  border-left: 4px solid var(--primary);
+}
+
+.client-message {
+  background: #e8f5e9;
+  border-left: 4px solid var(--success);
+}
+
+.system-message {
+  background: #fff3e0;
+  border-left: 4px solid var(--warning);
+}
+
+.other-player-message {
+  background: #ffebee;
+  border-left: 4px solid #e91e63;
+}
+
+.message-input {
+  display: flex;
+  gap: 10px;
+}
+
+.message-input input {
+  flex: 1;
+  padding: 12px 15px;
+  border: 2px solid #ddd;
+  border-radius: 8px;
+  font-size: 1rem;
+  transition: border-color 0.3s;
+}
+
+.message-input input:focus {
+  border-color: var(--primary);
+  outline: none;
+  box-shadow: 0 0 0 2px rgba(52, 152, 219, 0.2);
+}
+
+.players-list {
+  background: white;
+  border-radius: 8px;
+  padding: 15px;
+  min-width: 250px;
+}
+
+.player-item {
+  padding: 10px;
+  border-bottom: 1px solid #eee;
+  display: flex;
+  align-items: center;
+}
+
+.player-item:last-child {
+  border-bottom: none;
+}
+
+.player-status {
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  background: #2ecc71;
+  margin-right: 10px;
+}
+
+footer {
+  text-align: center;
+  padding: 20px;
+  background: var(--dark);
+  color: #bdc3c7;
+  font-size: 0.9rem;
+}
+
+@media (max-width: 768px) {
+  .room-content {
+    flex-direction: column;
+  }
+  
+  .btn {
+    padding: 10px 15px;
+  }
+  
+  .room-input {
+    flex-direction: column;
+  }
+}
