@@ -270,10 +270,32 @@ header {
   align-items: center;
   justify-content: center;
   cursor: pointer;
+  position: relative;
 }
 
 .game-cell:hover {
   background: #d9f0ff;
+}
+
+/* 棋子样式 */
+.stone {
+  width: 16px;
+  height: 16px;
+  border-radius: 50%;
+  position: absolute;
+}
+
+.stone.black {
+  background: #000;
+  box-shadow: 0 2px 4px rgba(0,0,0,0.5);
+  z-index: 10;
+}
+
+.stone.white {
+  background: #fff;
+  box-shadow: 0 2px 4px rgba(0,0,0,0.5);
+  border: 1px solid #ccc;
+  z-index: 10;
 }
 
 .chat-area {
@@ -297,6 +319,7 @@ header {
   min-height: 300px;
   display: flex;
   flex-direction: column;
+  max-height: 400px; /* 添加最大高度限制 */
 }
 
 .message {
@@ -370,51 +393,4 @@ header {
   border-color: var(--primary);
   outline: none;
   box-shadow: 0 0 0 2px rgba(52, 152, 219, 0.2);
-}
-
-  background: white;
-  border-radius: 8px;
-  padding: 15px;
-  min-width: 250px;
-}
-
-.player-item {
-  padding: 10px;
-  border-bottom: 1px solid #eee;
-  display: flex;
-  align-items: center;
-}
-
-.player-item:last-child {
-  border-bottom: none;
-}
-
-.player-status {
-  width: 10px;
-  height: 10px;
-  border-radius: 50%;
-  background: #2ecc71;
-  margin-right: 10px;
-}
-
-footer {
-  text-align: center;
-  padding: 20px;
-  background: var(--dark);
-  color: #bdc3c7;
-  font-size: 0.9rem;
-}
-
-@media (max-width: 768px) {
-  .room-content {
-    flex-direction: column;
-  }
-  
-  .btn {
-    padding: 10px 15px;
-  }
-  
-  .room-input {
-    flex-direction: column;
-  }
 }
