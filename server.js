@@ -117,7 +117,11 @@ io.on('connection', (socket) => {
       name: data.name,
       maxPlayers: data.maxPlayers || 4,
       players: [socket.id],
-      createdAt: new Date()
+      createdAt: new Date(),
+      // 添加颜色选择和游戏状态属性
+      playerColors: {},
+      gameStarted: false,
+      currentPlayer: null
     };
     
     rooms.set(roomId, room);
@@ -160,6 +164,190 @@ io.on('connection', (socket) => {
       }
     }
   });
+  
+  // 选择颜色
+  socket.on('select-color', (data) => {
+    const { roomId, color } = data;
+    const user = connectedUsers.get(socket.id);
+    if (!user || !user.currentRoom) return;
+    
+    const room = rooms.get(user.currentRoom);
+    if (!room || room.id !== roomId) return;
+    
+    // 检查颜色是否已被选择
+    if (Object.values(room.playerColors).includes(color)) {
+      socket.emit('server-message', {
+        type: 'error',
+        message: `${color === 'black' ? '黑棋' : '白棋'}已被其他玩家选择`,
+        timestamp: new Date().toISOString()
+      });
+      return;
+    }
+    
+    // 记录玩家选择的颜色
+    room.playerColors[socket.id] = color;
+    rooms.set(roomId, room);
+    
+    // 通知房间内所有玩家
+    room.players.forEach(playerId => {
+      io.to(playerId).emit('color-selected', {
+        playerId: socket.id,
+        username: user.username,
+        color: color
+      });
+    });
+    
+    // 检查是否两个颜色都已选择，如果是则开始游戏
+    const blackPlayer = Object.keys(room.playerColors).find(id => room.playerColors[id] === 'black');
+    const whitePlayer = Object.keys(room.playerColors).find(id => room.playerColors[id] === 'white');
+    
+    if (blackPlayer && whitePlayer && !room.gameStarted) {
+      room.gameStarted = true;
+      room.currentPlayer = blackPlayer; // 黑棋先手
+      rooms.set(roomId, room);
+      
+      // 通知房间内所有玩家游戏开始
+      room.players.forEach(playerId => {
+        io.to(playerId).emit('game-started', {
+          blackPlayer: blackPlayer,
+          whitePlayer: whitePlayer
+        });
+      });
+    }
+    
+    // 广播房间玩家更新
+    broadcastRoomPlayers(roomId);
+  });
+  
+  // 处理游戏移动
+  socket.on('game-move', (data) => {
+    const { roomId, row, col } = data;
+    const user = connectedUsers.get(socket.id);
+    if (!user || !user.currentRoom) return;
+    
+    const room = rooms.get(user.currentRoom);
+    if (!room || room.id !== roomId) return;
+    
+    // 检查游戏是否已开始
+    if (!room.gameStarted) return;
+    
+    // 检查是否轮到当前玩家
+    if (room.currentPlayer !== socket.id) {
+      socket.emit('server-message', {
+        type: 'error',
+        message: '还未轮到你下棋',
+        timestamp: new Date().toISOString()
+      });
+      return;
+    }
+    
+    // 检查该位置是否已经有棋子
+    if (!room.board) {
+      room.board = Array(15).fill(null).map(() => Array(15).fill(null));
+    }
+    
+    if (room.board[row][col] !== null) {
+      socket.emit('server-message', {
+        type: 'error',
+        message: '该位置已经有棋子了',
+        timestamp: new Date().toISOString()
+      });
+      return;
+    }
+    
+    // 获取当前玩家颜色
+    const color = room.playerColors[socket.id];
+    
+    // 记录落子信息
+    const moveData = {
+      row: row,
+      col: col,
+      player: socket.id,
+      username: user.username,
+      color: color
+    };
+    
+    // 通知房间内所有玩家落子信息
+    room.players.forEach(playerId => {
+      io.to(playerId).emit('game-move', moveData);
+    });
+    
+    // 记录当前落子到棋盘
+    room.board[row][col] = color;
+    rooms.set(roomId, room);
+    
+    // 检查是否获胜
+    const win = checkWin(roomId, row, col, color);
+    
+    if (win) {
+      // 游戏结束，通知所有玩家
+      room.players.forEach(playerId => {
+        io.to(playerId).emit('game-over', {
+          winner: socket.id,
+          winnerName: user.username,
+          color: color
+        });
+      });
+      
+      // 重置游戏状态
+      room.gameStarted = false;
+      room.currentPlayer = null;
+      rooms.set(roomId, room);
+    } else {
+      // 切换当前玩家
+      room.currentPlayer = room.currentPlayer === Object.keys(room.playerColors).find(id => room.playerColors[id] === 'black') 
+        ? Object.keys(room.playerColors).find(id => room.playerColors[id] === 'white')
+        : Object.keys(room.playerColors).find(id => room.playerColors[id] === 'black');
+      rooms.set(roomId, room);
+    }
+  });
+  
+  // 检查是否获胜
+  function checkWin(roomId, row, col, color) {
+    const room = rooms.get(roomId);
+    if (!room || !room.board) return false;
+    
+    // 检查四个方向是否连成五子
+    const directions = [
+      [0, 1],   // 水平
+      [1, 0],   // 垂直
+      [1, 1],   // 右下对角线
+      [1, -1]   // 左下对角线
+    ];
+    
+    for (let [dx, dy] of directions) {
+      let count = 1; // 包含当前棋子
+      
+      // 正方向检查
+      for (let i = 1; i <= 4; i++) {
+        const r = parseInt(row) + dx * i;
+        const c = parseInt(col) + dy * i;
+        if (r >= 0 && r < 15 && c >= 0 && c < 15 && room.board[r][c] === color) {
+          count++;
+        } else {
+          break;
+        }
+      }
+      
+      // 反方向检查
+      for (let i = 1; i <= 4; i++) {
+        const r = parseInt(row) - dx * i;
+        const c = parseInt(col) - dy * i;
+        if (r >= 0 && r < 15 && c >= 0 && c < 15 && room.board[r][c] === color) {
+          count++;
+        } else {
+          break;
+        }
+      }
+      
+      // 如果连成五子，返回胜利
+      if (count >= 5) {
+        return true;
+      }
+    }
+    
+    return false;
+  }
   
   // 加入房间函数
   function joinRoom(socket, roomId) {
@@ -212,7 +400,7 @@ io.on('connection', (socket) => {
     // 广播房间列表更新
     broadcastRoomList();
     
-    // 通知房间内玩家更新
+    // 通知房间内
     broadcastRoomPlayers(roomId);
   }
   
@@ -231,6 +419,17 @@ io.on('connection', (socket) => {
     if (room.players.length === 0) {
       rooms.delete(roomId);
     } else {
+      // 如果离开的玩家选择了颜色，需要从playerColors中移除
+      if (room.playerColors[socket.id]) {
+        delete room.playerColors[socket.id];
+        
+        // 如果游戏正在进行中，需要重置游戏状态
+        if (room.gameStarted) {
+          room.gameStarted = false;
+          room.currentPlayer = null;
+        }
+      }
+      
       rooms.set(roomId, room);
     }
     

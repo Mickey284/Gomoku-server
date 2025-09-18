@@ -3,6 +3,8 @@ let socket;
 let connectionId = '';
 let username = '';
 let currentRoom = null;
+let selectedColor = null;
+let playerColors = {};
 
 // 初始化大厅页面
 function initLobbyPage() {
@@ -145,6 +147,8 @@ function initSocketConnection(roomId = null) {
             if (data.sender !== socket.id) {
                 addMessage(data.senderName, data.message, 'other-player-message');
             }
+        } else if (data.type === 'error') {
+            addMessage('错误', data.message, 'system');
         }
     });
 
@@ -168,6 +172,12 @@ function initSocketConnection(roomId = null) {
     socket.on('player-left', (player) => {
         addMessage('系统', `${player.username} 离开了游戏`, 'system');
         removePlayerFromList(player.id);
+        
+        // 如果该玩家选择了颜色，需要更新界面
+        if (playerColors[player.id]) {
+            delete playerColors[player.id];
+            updateColorSelectionUI();
+        }
     });
 
     // 房间创建成功
@@ -185,11 +195,14 @@ function initSocketConnection(roomId = null) {
     socket.on('room-joined', (room) => {
         addMessage('系统', `你已加入房间 "${room.name}"`, 'system');
         currentRoom = room;
+        playerColors = room.playerColors || {};
         highlightCurrentRoom();
 
         // 更新房间标题
         if (document.getElementById('room-title')) {
             document.getElementById('room-title').textContent = room.name;
+            // 初始化颜色选择UI
+            updateColorSelectionUI();
         } else {
             // 如果在大厅页面，需要跳转到房间页面
             window.location.href = `room.html?roomId=${room.id}`;
@@ -200,6 +213,7 @@ function initSocketConnection(roomId = null) {
     socket.on('room-left', () => {
         addMessage('系统', `你已离开房间`, 'system');
         currentRoom = null;
+        playerColors = {};
         highlightCurrentRoom();
 
         // 返回大厅
@@ -216,15 +230,78 @@ function initSocketConnection(roomId = null) {
     socket.on('room-players-updated', (room) => {
         if (currentRoom && currentRoom.id === room.id) {
             currentRoom = room;
+            playerColors = room.playerColors || {};
+            updateColorSelectionUI();
         }
         updateRoomList([room]);
         highlightCurrentRoom();
     });
+    
+    // 玩家选择颜色
+    socket.on('color-selected', (data) => {
+        const { playerId, username, color } = data;
+        playerColors[playerId] = color;
+        
+        addMessage('系统', `${username} 选择了${color === 'black' ? '黑棋' : '白棋'}`, 'system');
+        updateColorSelectionUI();
+    });
+    
+    // 游戏开始
+    socket.on('game-started', (data) => {
+        const { blackPlayer, whitePlayer } = data;
+        addMessage('系统', '游戏开始！', 'system');
+        
+        // 显示游戏状态
+        const gameStatus = document.getElementById('game-status');
+        if (gameStatus) {
+            gameStatus.textContent = `游戏进行中 - 黑棋: ${connectedUsers.get(blackPlayer)?.username || '玩家'}, 白棋: ${connectedUsers.get(whitePlayer)?.username || '玩家'}`;
+        }
+        
+        // 启用棋盘
+        enableGameBoard();
+    });
+    
+    // 游戏落子
+    socket.on('game-move', (data) => {
+        const { row, col, username, win } = data;
+        placeStone(row, col, playerColors[data.player] || 'black');
+        const gameStatus = document.getElementById('game-status');
+        if (gameStatus) {
+            if (win) {
+                gameStatus.textContent = `${username} 获胜！游戏结束`;
+            } else {
+                gameStatus.textContent = `轮到${playerColors[data.player] === 'black' ? '白棋' : '黑棋'}下棋`;
+            }
+        }
+        
+        // 如果游戏结束，禁用棋盘
+        if (win) {
+            disableGameBoard();
+        }
+    });
+    
+    // 游戏结束
+    socket.on('game-over', (data) => {
+        const { winnerName, color } = data;
+        addMessage('系统', `游戏结束！${winnerName}(${color === 'black' ? '黑棋' : '白棋'}) 获胜！`, 'system');
+        
+        // 显示游戏状态
+        const gameStatus = document.getElementById('game-status');
+        if (gameStatus) {
+            gameStatus.textContent = `游戏结束！${winnerName} 获胜！`;
+        }
+        
+        // 禁用棋盘
+        disableGameBoard();
+    });
+
 }
 
 // 初始化游戏棋盘
 function initGameBoard() {
     const gameBoard = document.getElementById('game-board');
+    if (!gameBoard) return;
+    
     gameBoard.innerHTML = '';
 
     for (let i = 0; i < 15; i++) {
@@ -236,6 +313,27 @@ function initGameBoard() {
             cell.addEventListener('click', handleCellClick);
             gameBoard.appendChild(cell);
         }
+    }
+    
+    // 禁用棋盘直到游戏开始
+    disableGameBoard();
+}
+
+// 禁用游戏棋盘
+function disableGameBoard() {
+    const gameBoard = document.getElementById('game-board');
+    if (gameBoard) {
+        gameBoard.style.pointerEvents = 'none';
+        gameBoard.style.opacity = '0.3';
+    }
+}
+
+// 启用游戏棋盘
+function enableGameBoard() {
+    const gameBoard = document.getElementById('game-board');
+    if (gameBoard) {
+        gameBoard.style.pointerEvents = 'auto';
+        gameBoard.style.opacity = '1';
     }
 }
 
@@ -255,9 +353,24 @@ function handleCellClick(e) {
     });
 }
 
+// 放置棋子
+function placeStone(row, col, color) {
+    const cell = document.querySelector(`.game-cell[data-row="${row}"][data-col="${col}"]`);
+    if (!cell) return;
+    
+    // 检查是否已有棋子
+    if (cell.querySelector('.stone')) return;
+    
+    const stone = document.createElement('div');
+    stone.className = `stone ${color}`;
+    cell.appendChild(stone);
+}
+
 // 更新玩家列表
 function updatePlayerList(players) {
     const playersList = document.getElementById('players-list');
+    if (!playersList) return;
+    
     playersList.innerHTML = '';
 
     players.forEach(player => {
@@ -275,6 +388,7 @@ function updatePlayerList(players) {
 // 更新房间列表
 function updateRoomList(rooms) {
     const roomList = document.getElementById('room-list');
+    if (!roomList) return;
 
     // 如果房间列表为空，显示提示
     if (rooms.length === 0) {
@@ -464,3 +578,94 @@ function leaveRoom() {
         window.location.href = 'index.html';
     }
 }
+
+// 更新颜色选择UI
+function updateColorSelectionUI() {
+    // 创建颜色选择区域（如果不存在）
+    let colorSelection = document.getElementById('color-selection');
+    if (!colorSelection) {
+        const roomContent = document.querySelector('.room-content');
+        if (!roomContent) return;
+        
+        colorSelection = document.createElement('div');
+        colorSelection.id = 'color-selection';
+        colorSelection.className = 'panel';
+        colorSelection.innerHTML = `
+            <h3>选择棋子颜色</h3>
+            <div style="display: flex; gap: 20px; justify-content: center;">
+                <button id="select-black" class="btn btn-dark" style="background: #333; color: white;">选择黑棋</button>
+                <button id="select-white" class="btn btn-light" style="background: #fff; color: black; border: 1px solid #ccc;">选择白棋</button>
+            </div>
+            <div id="selected-colors" style="margin-top: 15px; text-align: center;"></div>
+        `;
+        roomContent.insertBefore(colorSelection, roomContent.firstChild);
+        
+        // 添加事件监听器
+        document.getElementById('select-black').addEventListener('click', () => selectColor('black'));
+        document.getElementById('select-white').addEventListener('click', () => selectColor('white'));
+    }
+    
+    // 更新已选择颜色的显示
+    const selectedColorsDiv = document.getElementById('selected-colors');
+    if (selectedColorsDiv) {
+        let html = '<p style="margin: 5px 0;"><strong>已选择:</strong></p>';
+        for (const [playerId, color] of Object.entries(playerColors)) {
+            const user = connectedUsers.get(playerId);
+            const username = user ? user.username : `用户_${playerId.substring(0, 6)}`;
+            html += `<span style="margin: 0 10px; padding: 5px; border-radius: 4px; background: ${color === 'black' ? '#333' : '#fff'}; color: ${color === 'black' ? 'white' : 'black'}; border: 1px solid #ccc;">${username}: ${color === 'black' ? '黑棋' : '白棋'}</span>`;
+        }
+        selectedColorsDiv.innerHTML = html;
+    }
+    
+    // 更新按钮状态
+    const blackButton = document.getElementById('select-black');
+    const whiteButton = document.getElementById('select-white');
+    
+    if (blackButton && whiteButton) {
+        // 检查颜色是否已被选择
+        const blackTaken = Object.values(playerColors).includes('black');
+        const whiteTaken = Object.values(playerColors).includes('white');
+        
+        // 更新按钮状态
+        blackButton.disabled = blackTaken;
+        blackButton.style.opacity = blackTaken ? 0.5 : 1;
+        whiteButton.disabled = whiteTaken;
+        whiteButton.style.opacity = whiteTaken ? 0.5 : 1;
+    }
+}
+
+// 选择颜色
+function selectColor(color) {
+    if (!currentRoom) return;
+    
+    // 检查是否已经选择了颜色
+    if (selectedColor) {
+        addMessage('系统', `你已经选择了${selectedColor === 'black' ? '黑棋' : '白棋'}`, 'system');
+        return;
+    }
+    
+    // 发送颜色选择到服务器
+    socket.emit('select-color', {
+        roomId: currentRoom.id,
+        color: color
+    });
+    
+    selectedColor = color;
+}
+
+// 存储连接的用户（客户端版本）
+const connectedUsers = new Map();
+
+// 监听玩家加入事件，更新本地用户列表
+socket && socket.on('player-joined', (player) => {
+    connectedUsers.set(player.id, player);
+});
+
+socket && socket.on('room-joined', (room) => {
+    // 更新本地用户列表
+    room.players.forEach(playerId => {
+        if (!connectedUsers.has(playerId)) {
+            connectedUsers.set(playerId, { id: playerId, username: `用户_${playerId.substring(0, 6)}` });
+        }
+    });
+});
