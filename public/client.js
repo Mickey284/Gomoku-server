@@ -285,6 +285,9 @@ function initSocketConnection(roomId = null) {
         const { winnerName, color } = data;
         addMessage('系统', `游戏结束！${winnerName}(${color === 'black' ? '黑棋' : '白棋'}) 获胜！`, 'system');
         
+        // 显示游戏结束弹窗
+        showGameResult(winnerName === username ? 'win' : 'lose', winnerName, color);
+        
         // 显示游戏状态
         const gameStatus = document.getElementById('game-status');
         if (gameStatus) {
@@ -651,6 +654,51 @@ function selectColor(color) {
     });
     
     selectedColor = color;
+}
+
+// 显示游戏结果弹窗
+function showGameResult(result, winnerName, color) {
+    // 创建弹窗元素
+    const modal = document.createElement('div');
+    modal.id = 'game-result-modal';
+    modal.className = 'modal';
+    
+    // 设置弹窗内容
+    const resultText = result === 'win' ? '赢了！' : '惜败！';
+    const resultClass = result === 'win' ? 'win' : 'lose';
+    
+    modal.innerHTML = `
+        <div class="modal-content ${resultClass}">
+            <div class="modal-header">
+                <h2>${resultText}</h2>
+            </div>
+            <div class="modal-body">
+                <p>${winnerName} (${color === 'black' ? '黑棋' : '白棋'}) 获胜</p>
+            </div>
+            <div class="modal-footer">
+                <button class="btn btn-primary" onclick="closeGameResultModal()">确定</button>
+            </div>
+        </div>
+    `;
+    
+    // 添加到页面
+    document.body.appendChild(modal);
+    
+    // 显示弹窗
+    setTimeout(() => {
+        modal.classList.add('show');
+    }, 10);
+}
+
+// 关闭游戏结果弹窗
+function closeGameResultModal() {
+    const modal = document.getElementById('game-result-modal');
+    if (modal) {
+        modal.classList.remove('show');
+        setTimeout(() => {
+            document.body.removeChild(modal);
+        }, 300);
+    }
 }
 
 // 存储连接的用户（客户端版本）
