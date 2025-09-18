@@ -244,6 +244,15 @@ function initSocketConnection(roomId = null) {
         
         addMessage('系统', `${username} 选择了${color === 'black' ? '黑棋' : '白棋'}`, 'system');
         updateColorSelectionUI();
+        updateSelectedColorsInModal(); // 更新弹窗中的显示
+    
+        // 如果是自己选择的颜色，关闭弹窗
+        if (playerId === socket.id) {
+            const modal = document.getElementById('piece-selection-modal');
+            if (modal) {
+                modal.remove();
+            }
+        }
     });
     
     // 游戏开始
@@ -584,39 +593,83 @@ function leaveRoom() {
 
 // 更新颜色选择UI
 function updateColorSelectionUI() {
-    // 创建颜色选择区域（如果不存在）
-    let colorSelection = document.getElementById('color-selection');
-    if (!colorSelection) {
-        const roomContent = document.querySelector('.room-content');
-        if (!roomContent) return;
-        
-        colorSelection = document.createElement('div');
-        colorSelection.id = 'color-selection';
-        colorSelection.className = 'panel';
-        colorSelection.innerHTML = `
-            <h3>选择棋子颜色</h3>
-            <div style="display: flex; gap: 20px; justify-content: center;">
-                <button id="select-black" class="btn btn-dark" style="background: #333; color: white;">选择黑棋</button>
-                <button id="select-white" class="btn btn-light" style="background: #fff; color: black; border: 1px solid #ccc;">选择白棋</button>
-            </div>
-            <div id="selected-colors" style="margin-top: 15px; text-align: center;"></div>
-        `;
-        roomContent.insertBefore(colorSelection, roomContent.firstChild);
-        
-        // 添加事件监听器
-        document.getElementById('select-black').addEventListener('click', () => selectColor('black'));
-        document.getElementById('select-white').addEventListener('click', () => selectColor('white'));
+    // 如果没有选择颜色，则显示选择界面
+    if (!selectedColor) {
+        showColorSelectionModal();
     }
     
     // 更新已选择颜色的显示
-    const selectedColorsDiv = document.getElementById('selected-colors');
-    if (selectedColorsDiv) {
-        let html = '<p style="margin: 5px 0;"><strong>已选择:</strong></p>';
+    const gameStatus = document.getElementById('game-status');
+    if (gameStatus) {
+        let html = '<strong>已选择:</strong> ';
+        let hasSelection = false;
         for (const [playerId, color] of Object.entries(playerColors)) {
             const user = connectedUsers.get(playerId);
             const username = user ? user.username : `用户_${playerId.substring(0, 6)}`;
-            html += `<span style="margin: 0 10px; padding: 5px; border-radius: 4px; background: ${color === 'black' ? '#333' : '#fff'}; color: ${color === 'black' ? 'white' : 'black'}; border: 1px solid #ccc;">${username}: ${color === 'black' ? '黑棋' : '白棋'}</span>`;
+            html += `<span style="margin: 0 5px; padding: 2px 8px; border-radius: 4px; background: ${color === 'black' ? '#333' : '#fff'}; color: ${color === 'black' ? 'white' : 'black'}; border: 1px solid #ccc;">${username}: ${color === 'black' ? '黑棋' : '白棋'}</span>`;
+            hasSelection = true;
         }
+        
+        if (hasSelection) {
+            gameStatus.innerHTML = html;
+        } else {
+            gameStatus.textContent = "等待玩家选择颜色...";
+        }
+    }
+}
+
+// 显示颜色选择弹窗
+function showColorSelectionModal() {
+    // 如果弹窗已存在，则不重复创建
+    if (document.getElementById('piece-selection-modal')) {
+        return;
+    }
+    
+    // 创建弹窗元素
+    const modal = document.createElement('div');
+    modal.id = 'piece-selection-modal';
+    modal.className = 'piece-selection-modal';
+    
+    // 设置弹窗内容
+    modal.innerHTML = `
+        <div class="piece-selection-content">
+            <h3>选择棋子颜色</h3>
+            <div class="piece-selection-buttons">
+                <button id="select-black" class="btn-dark">选择黑棋</button>
+                <button id="select-white" class="btn-light">选择白棋</button>
+            </div>
+            <div class="selected-colors-display" id="selected-colors-modal"></div>
+        </div>
+    `;
+    
+    // 添加到页面
+    document.body.appendChild(modal);
+    
+    // 添加事件监听器
+    document.getElementById('select-black').addEventListener('click', () => selectColor('black'));
+    document.getElementById('select-white').addEventListener('click', () => selectColor('white'));
+    
+    // 更新已选择颜色的显示
+    updateSelectedColorsInModal();
+}
+
+// 更新弹窗中的已选择颜色显示
+function updateSelectedColorsInModal() {
+    const selectedColorsDiv = document.getElementById('selected-colors-modal');
+    if (selectedColorsDiv) {
+        let html = '<p><strong>已选择:</strong></p>';
+        let hasSelection = false;
+        for (const [playerId, color] of Object.entries(playerColors)) {
+            const user = connectedUsers.get(playerId);
+            const username = user ? user.username : `用户_${playerId.substring(0, 6)}`;
+            html += `<span style="margin: 0 5px; padding: 3px 8px; border-radius: 4px; background: ${color === 'black' ? '#333' : '#fff'}; color: ${color === 'black' ? 'white' : 'black'}; border: 1px solid #ccc;">${username}: ${color === 'black' ? '黑棋' : '白棋'}</span>`;
+            hasSelection = true;
+        }
+        
+        if (!hasSelection) {
+            html = '<p>暂无玩家选择颜色</p>';
+        }
+        
         selectedColorsDiv.innerHTML = html;
     }
     
@@ -631,9 +684,7 @@ function updateColorSelectionUI() {
         
         // 更新按钮状态
         blackButton.disabled = blackTaken;
-        blackButton.style.opacity = blackTaken ? 0.5 : 1;
         whiteButton.disabled = whiteTaken;
-        whiteButton.style.opacity = whiteTaken ? 0.5 : 1;
     }
 }
 
@@ -654,6 +705,12 @@ function selectColor(color) {
     });
     
     selectedColor = color;
+    
+    // 关闭弹窗
+    const modal = document.getElementById('piece-selection-modal');
+    if (modal) {
+        modal.remove();
+    }
 }
 
 // 显示游戏结果弹窗
