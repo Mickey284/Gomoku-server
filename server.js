@@ -475,5 +475,20 @@ io.on('connection', (socket) => {
 
 // 启动服务器
 server.listen(PORT, '0.0.0.0', () => {
-  console.log(`服务器运行中: http://localhost:${PORT}`);
+  const interfaces = require('os').networkInterfaces();
+  const addresses = [];
+  
+  for (const iface of Object.values(interfaces)) {
+    for (const addr of iface) {
+      if (!addr.internal && addr.family === 'IPv4') {
+        addresses.push(addr.address);
+      }
+    }
+  }
+  
+  console.log(`服务器运行中:`);
+  console.log(`  本地地址: http://localhost:${PORT}`);
+  addresses.forEach(addr => {
+    console.log(`  网络地址: http://${addr}:${PORT}`);
+  });
 });
