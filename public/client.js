@@ -419,10 +419,6 @@ function updateRoomList(rooms) {
             roomElement.innerHTML = `
                 <div class="room-info">
                     <div class="room-name">${room.name}</div>
-                    <div class="room-players">玩家: ${room.players.length}/${room.maxPlayers || 4}</div>
-                </div>
-                <div class="room-status ${room.players.length < (room.maxPlayers || 4) ? 'available' : 'full'}">
-                    ${room.players.length < (room.maxPlayers || 4) ? '可用' : '已满'}
                 </div>
             `;
             roomList.appendChild(roomElement);
@@ -436,12 +432,8 @@ function updateRoomList(rooms) {
             const roomInfo = roomElement.querySelector('.room-info');
             roomInfo.innerHTML = `
                 <div class="room-name">${room.name}</div>
-                <div class="room-players">玩家: ${room.players.length}/${room.maxPlayers || 4}</div>
             `;
 
-            const roomStatus = roomElement.querySelector('.room-status');
-            roomStatus.className = `room-status ${room.players.length < (room.maxPlayers || 4) ? 'available' : 'full'}`;
-            roomStatus.textContent = room.players.length < (room.maxPlayers || 4) ? '可用' : '已满';
         }
     });
 }
@@ -668,9 +660,22 @@ function updateSelectedColorsInModal() {
         const blackTaken = Object.values(playerColors).includes('black');
         const whiteTaken = Object.values(playerColors).includes('white');
         
-        // 更新按钮状态
-        blackButton.disabled = blackTaken;
-        whiteButton.disabled = whiteTaken;
+        // 更新按钮状态和文字
+        if (blackTaken) {
+            blackButton.disabled = true;
+            blackButton.textContent = '已被选择';
+        } else {
+            blackButton.disabled = false;
+            blackButton.textContent = '选择黑棋';
+        }
+        
+        if (whiteTaken) {
+            whiteButton.disabled = true;
+            whiteButton.textContent = '已被选择';
+        } else {
+            whiteButton.disabled = false;
+            whiteButton.textContent = '选择白棋';
+        }
     }
 }
 

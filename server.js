@@ -364,16 +364,6 @@ io.on('connection', (socket) => {
       return;
     }
     
-    // 检查房间是否已满
-    if (room.players.length >= room.maxPlayers) {
-      socket.emit('server-message', {
-        type: 'error',
-        message: '房间已满',
-        timestamp: new Date().toISOString()
-      });
-      return;
-    }
-    
     // 如果用户已经在另一个房间，先离开
     if (user.currentRoom && user.currentRoom !== roomId) {
       leaveRoom(socket, user.currentRoom);
@@ -402,6 +392,9 @@ io.on('connection', (socket) => {
     
     // 通知房间内
     broadcastRoomPlayers(roomId);
+    
+    // 添加调试日志
+    console.log(`玩家加入房间: ${room.name} (${room.id}), 当前玩家数量: ${room.players.length}`);
   }
   
   // 离开房间函数

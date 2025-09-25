@@ -205,23 +205,6 @@ header {
   color: #7f8c8d;
 }
 
-.room-status {
-  padding: 5px 10px;
-  border-radius: 15px;
-  font-size: 0.8rem;
-  font-weight: bold;
-}
-
-.room-status.available {
-  background: #e8f5e9;
-  color: var(--success);
-}
-
-.room-status.full {
-  background: #ffebee;
-  color: var(--danger);
-}
-
 .room-header {
   display: flex;
   justify-content: space-between;
