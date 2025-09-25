@@ -21,15 +21,19 @@ body {
     color: #333;
     min-height: 100vh;
     padding: 20px;
+    background-image: url('background.jpg'); /* 添加背景图片 */
+    background-size: cover; /* 背景图片覆盖整个页面 */
+    background-position: center; /* 背景图片居中 */
+    background-repeat: no-repeat; /* 背景图片不重复 */
+    background-attachment: fixed; /* 背景图片固定不滚动 */
 }
 
 .container {
     max-width: 1200px;
     margin: 0 auto;
-    background: rgba(255, 255, 255, 0.95); /* 保持容器为白色背景 */
-    border-radius: 15px;
-    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
-    overflow: hidden;
+    background-color: rgba(255, 255, 255, 0.9); /* 为内容区域添加半透明白色背景 */
+    border-radius: 10px; /* 添加圆角 */
+    box-shadow: 0 0 20px rgba(0, 0, 0, 0.3); /* 添加阴影效果 */
 }
 
 header {
@@ -554,4 +558,13 @@ header {
   max-width: 80%;
   margin-left: auto;
   margin-right: auto;
+}
+
+/* 为房间页面也添加同样的背景样式 */
+.room-container {
+    max-width: 1200px;
+    margin: 0 auto;
+    background-color: rgba(255, 255, 255, 0.9);
+    border-radius: 10px;
+    box-shadow: 0 0 20px rgba(0, 0, 0, 0.3);
 }
