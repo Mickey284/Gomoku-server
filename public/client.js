@@ -601,17 +601,10 @@ function updateColorSelectionUI() {
     // 更新已选择颜色的显示
     const gameStatus = document.getElementById('game-status');
     if (gameStatus) {
-        let html = '<strong>已选择:</strong> ';
-        let hasSelection = false;
-        for (const [playerId, color] of Object.entries(playerColors)) {
-            const user = connectedUsers.get(playerId);
-            const username = user ? user.username : `用户_${playerId.substring(0, 6)}`;
-            html += `<span style="margin: 0 5px; padding: 2px 8px; border-radius: 4px; background: ${color === 'black' ? '#333' : '#fff'}; color: ${color === 'black' ? 'white' : 'black'}; border: 1px solid #ccc;">${username}: ${color === 'black' ? '黑棋' : '白棋'}</span>`;
-            hasSelection = true;
-        }
-        
-        if (hasSelection) {
-            gameStatus.innerHTML = html;
+        // 只显示当前玩家选择的颜色
+        if (selectedColor) {
+            const colorText = selectedColor === 'black' ? '黑棋' : '白棋';
+            gameStatus.innerHTML = `<strong>已选择:</strong> <span style="margin: 0 5px; padding: 2px 8px; border-radius: 4px; background: ${selectedColor === 'black' ? '#333' : '#fff'}; color: ${selectedColor === 'black' ? 'white' : 'black'}; border: 1px solid #ccc;">${colorText}</span>`;
         } else {
             gameStatus.textContent = "等待玩家选择颜色...";
         }
@@ -657,20 +650,13 @@ function showColorSelectionModal() {
 function updateSelectedColorsInModal() {
     const selectedColorsDiv = document.getElementById('selected-colors-modal');
     if (selectedColorsDiv) {
-        let html = '<p><strong>已选择:</strong></p>';
-        let hasSelection = false;
-        for (const [playerId, color] of Object.entries(playerColors)) {
-            const user = connectedUsers.get(playerId);
-            const username = user ? user.username : `用户_${playerId.substring(0, 6)}`;
-            html += `<span style="margin: 0 5px; padding: 3px 8px; border-radius: 4px; background: ${color === 'black' ? '#333' : '#fff'}; color: ${color === 'black' ? 'white' : 'black'}; border: 1px solid #ccc;">${username}: ${color === 'black' ? '黑棋' : '白棋'}</span>`;
-            hasSelection = true;
+        // 只显示当前玩家选择的颜色
+        if (selectedColor) {
+            const colorText = selectedColor === 'black' ? '黑棋' : '白棋';
+            selectedColorsDiv.innerHTML = `<p><strong>已选择:</strong> <span style="margin: 0 5px; padding: 3px 8px; border-radius: 4px; background: ${selectedColor === 'black' ? '#333' : '#fff'}; color: ${selectedColor === 'black' ? 'white' : 'black'}; border: 1px solid #ccc;">${colorText}</span></p>`;
+        } else {
+            selectedColorsDiv.innerHTML = '<p>您尚未选择颜色</p>';
         }
-        
-        if (!hasSelection) {
-            html = '<p>暂无玩家选择颜色</p>';
-        }
-        
-        selectedColorsDiv.innerHTML = html;
     }
     
     // 更新按钮状态
