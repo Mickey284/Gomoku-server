@@ -19,6 +19,8 @@ const PORT = process.env.PORT || 8080;
 const connectedUsers = new Map();
 // 存储房间信息
 const rooms = new Map();
+// 存储待删除的房间定时器
+const roomDeletionTimers = new Map();
 
 // 静态文件服务
 const publicPath = path.resolve(__dirname, 'public');
@@ -155,14 +157,35 @@ io.on('connection', (socket) => {
     console.log(`客户端断开: ${socket.id}`);
     
     const user = connectedUsers.get(socket.id);
-    connectedUsers.delete(socket.id);
     
     if (user) {
-      // 如果用户在房间中，离开房间
+      // 如果用户在房间中，设置延迟处理离开房间逻辑
       if (user.currentRoom) {
-        leaveRoom(socket, user.currentRoom);
+        // 延迟0.3秒处理房间离开逻辑，防止页面刷新导致的误删除
+        setTimeout(() => {
+          // 检查用户是否重新连接（页面刷新的情况）
+          if (!connectedUsers.has(socket.id)) {
+            leaveRoom(socket, user.currentRoom);
+          } else {
+            // 用户重新连接了，但仍需要处理离开房间的逻辑
+            leaveRoom(socket, user.currentRoom);
+            // 更新用户状态为不在房间中
+            const updatedUser = connectedUsers.get(socket.id);
+            if (updatedUser) {
+              updatedUser.currentRoom = null;
+              connectedUsers.set(socket.id, updatedUser);
+            }
+          }
+        }, 300);
       }
     }
+    
+    // 延迟删除用户信息，给重新连接留出时间
+    setTimeout(() => {
+      if (!connectedUsers.has(socket.id)) {
+        connectedUsers.delete(socket.id);
+      }
+    }, 300);
   });
   
   // 选择颜色
@@ -369,6 +392,13 @@ io.on('connection', (socket) => {
       leaveRoom(socket, user.currentRoom);
     }
     
+    // 如果房间有待删除的定时器，清除它
+    if (roomDeletionTimers.has(roomId)) {
+      clearTimeout(roomDeletionTimers.get(roomId));
+      roomDeletionTimers.delete(roomId);
+      console.log(`房间 ${room.name} (${room.id}) 的删除已取消`);
+    }
+    
     // 加入房间
     room.players.push(socket.id);
     rooms.set(roomId, room);
@@ -402,18 +432,49 @@ io.on('connection', (socket) => {
     const room = rooms.get(roomId);
     if (!room) return;
     
+    // 检查用户是否仍然在连接列表中
     const user = connectedUsers.get(socket.id);
-    if (!user || user.currentRoom !== roomId) return;
+    // 即使用户不在连接列表中，也要处理房间中的玩家信息
+    if (!user || (user.currentRoom !== roomId && user.currentRoom !== null)) {
+      // 如果用户已经不在连接列表中，或者在其他房间中，则直接从房间中移除
+      room.players = room.players.filter(playerId => playerId !== socket.id);
+    } else if (user.currentRoom === roomId) {
+      // 如果用户确实在这个房间中，则从房间中移除
+      room.players = room.players.filter(playerId => playerId !== socket.id);
+    } else {
+      // 其他情况，也从房间中移除该用户
+      room.players = room.players.filter(playerId => playerId !== socket.id);
+    }
     
-    // 从房间中移除玩家
-    room.players = room.players.filter(playerId => playerId !== socket.id);
+    console.log(`玩家离开房间: ${room.name} (${room.id}), 离开后人数: ${room.players.length}`);
     
-    // 如果房间为空，删除房间
+    // 如果房间为空，5秒后删除房间
     if (room.players.length === 0) {
-      rooms.delete(roomId);
+      console.log(`房间为空，将在5秒后删除: ${room.name} (${room.id})`);
+      
+      // 如果已有定时器，先清除
+      if (roomDeletionTimers.has(roomId)) {
+        clearTimeout(roomDeletionTimers.get(roomId));
+      }
+      
+      // 设置5秒后删除房间的定时器
+      const timer = setTimeout(() => {
+        // 再次检查房间是否仍然为空
+        const roomCheck = rooms.get(roomId);
+        if (roomCheck && roomCheck.players.length === 0) {
+          rooms.delete(roomId);
+          roomDeletionTimers.delete(roomId);
+          console.log(`房间已删除: ${room.name} (${room.id})`);
+          // 广播房间列表更新
+          broadcastRoomList();
+        }
+      }, 5000);
+      
+      // 保存定时器引用
+      roomDeletionTimers.set(roomId, timer);
     } else {
       // 如果离开的玩家选择了颜色，需要从playerColors中移除
-      if (room.playerColors[socket.id]) {
+      if (room.playerColors && room.playerColors[socket.id]) {
         delete room.playerColors[socket.id];
         
         // 如果游戏正在进行中，需要重置游戏状态
@@ -426,16 +487,20 @@ io.on('connection', (socket) => {
       rooms.set(roomId, room);
     }
     
-    // 更新用户当前房间
-    user.currentRoom = null;
-    connectedUsers.set(socket.id, user);
+    // 更新用户当前房间状态（如果用户仍在线）
+    if (user) {
+      user.currentRoom = null;
+      connectedUsers.set(socket.id, user);
+    }
     
-    // 通知用户离开成功
-    socket.emit('room-left');
+    // 通知用户离开成功（如果用户仍在线）
+    if (connectedUsers.has(socket.id)) {
+      socket.emit('room-left');
+    }
     
     // 通知房间内其他玩家
     room.players.forEach(playerId => {
-      io.to(playerId).emit('player-left', user);
+      io.to(playerId).emit('player-left', {id: socket.id, username: user ? user.username : '未知用户'});
     });
     
     // 广播房间列表更新
@@ -471,6 +536,55 @@ io.on('connection', (socket) => {
       });
     }
   }
+  
+  // 快速开始功能
+  socket.on('quick-start', () => {
+    const user = connectedUsers.get(socket.id);
+    if (!user) return;
+    
+    // 查找是否已存在名为"快速开始"的房间
+    let quickRoom = null;
+    for (let [roomId, room] of rooms) {
+      if (room.name === '快速开始' && room.players.length < room.maxPlayers) {
+        quickRoom = room;
+        break;
+      }
+    }
+    
+    if (quickRoom) {
+      // 如果找到房间，加入该房间
+      joinRoom(socket, quickRoom.id);
+    } else {
+      // 如果没有找到，创建一个新房间
+      const roomId = generateRoomId();
+      const room = {
+        id: roomId,
+        name: '快速开始',
+        maxPlayers: 4,
+        players: [socket.id],
+        createdAt: new Date(),
+        playerColors: {},
+        gameStarted: false,
+        currentPlayer: null
+      };
+      
+      rooms.set(roomId, room);
+      
+      // 更新用户当前房间
+      user.currentRoom = roomId;
+      connectedUsers.set(socket.id, user);
+      
+      // 通知房间创建者
+      socket.emit('room-created', room);
+      
+      // 广播房间列表更新
+      broadcastRoomList();
+      
+      // 通知房间内玩家更新
+      broadcastRoomPlayers(roomId);
+    }
+  });
+
 });
 
 // 启动服务器
@@ -492,3 +606,10 @@ server.listen(PORT, '0.0.0.0', () => {
     console.log(`  网络地址: http://${addr}:${PORT}`);
   });
 });
+
+
+
+
+
+
+

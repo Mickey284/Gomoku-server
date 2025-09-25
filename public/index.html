@@ -34,7 +34,13 @@
             </div>
             
             <div class="panel">
-
+                <h3 class="panel-title">快速开始</h3>
+                <div class="lobby-controls">
+                    <button class="btn btn-primary" onclick="quickStart()">快速开始</button>
+                </div>
+            </div>
+            
+            <div class="panel">
                 <h3 class="panel-title">可用房间</h3>
                 <div class="room-list" id="room-list">
                     <div class="room-item">
@@ -59,7 +65,15 @@
         document.addEventListener('DOMContentLoaded', () => {
             initLobbyPage();
         });
+        
+        // 快速开始功能
+        function quickStart() {
+            if (socket) {
+                socket.emit('quick-start');
+            } else {
+                alert('请先连接到服务器');
+            }
+        }
     </script>
 </body>
 </html>
-
