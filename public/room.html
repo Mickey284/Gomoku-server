@@ -9,7 +9,7 @@
 </head>
 <body>
     <div class="container">
-        <!-- 删除:        <header>
+        <!-- Delete:        <header>
             <div class="logo">多人游戏平台</div>
             <div class="subtitle">游戏房间</div>
         </header> -->
@@ -20,16 +20,13 @@
                 <span id="server-status">正在连接服务器...</span>
             </div>
             <div>
+                <span id="room-title">房间名称</span> |
                 连接ID: <span id="connection-id" class="connection-id">未连接</span>
+                <button class="btn btn-danger" onclick="leaveRoom()" style="margin-left: 10px;">离开房间</button>
             </div>
         </div>
         
-        <div class="main-content">
-            <div class="room-header">
-                <div class="room-title" id="room-title">房间名称</div>
-                <button class="btn btn-danger" onclick="leaveRoom()">离开房间</button>
-            </div>
-            
+        <div class="main-content">            
             <div class="room-content">
                 <div class="game-area">
                     <h3>五子棋对战</h3>
@@ -51,17 +48,7 @@
                         <input type="text" id="message-input" placeholder="输入消息...">
                         <button class="btn btn-primary" onclick="sendMessage()">发送</button>
                     </div>
-                </div>
-                
-                <!-- 删除:                <div class="players-list">
-                    <h3>房间玩家</h3>
-                    <div id="players-list">
-                        <div class="player-item">
-                            <div class="player-status"></div>
-                            <span>加载中...</span>
-                        </div>
-                    </div>
-                </div> -->
+                </div>                
             </div>
         </div>
         

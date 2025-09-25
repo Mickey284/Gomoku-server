@@ -8,8 +8,9 @@ let playerColors = {};
 
 // 初始化大厅页面
 function initLobbyPage() {
-    // 生成随机用户名
-    username = `玩家_${Math.floor(1000 + Math.random() * 9000)}`;
+    // 生成随机水果名作为用户名
+    const fruits = ['Apple', 'Banana', 'Cherry', 'Date', 'Elderberry', 'Fig', 'Grape', 'Honeydew', 'Icaco', 'Jackfruit'];
+    username = fruits[Math.floor(Math.random() * fruits.length)];
     initSocketConnection();
     
     // 监听输入框回车事件
@@ -24,6 +25,9 @@ function initLobbyPage() {
             joinRoom();
         }
     });
+    
+    // 添加鼠标跟随效果
+    createMouseFollower();
 }
 
 // 初始化房间页面
@@ -38,8 +42,9 @@ function initRoomPage() {
         return;
     }
     
-    // 生成随机用户名
-    username = `玩家_${Math.floor(1000 + Math.random() * 9000)}`;
+    // 生成随机水果名作为用户名
+    const fruits = ['Apple', 'Banana', 'Cherry', 'Date', 'Elderberry', 'Fig', 'Grape', 'Honeydew', 'Icaco', 'Jackfruit'];
+    username = fruits[Math.floor(Math.random() * fruits.length)];
     initSocketConnection(roomId);
     
     // 监听输入框回车事件
@@ -51,6 +56,46 @@ function initRoomPage() {
     
     // 初始化游戏棋盘
     initGameBoard();
+    
+    // 注意：房间页面不需要鼠标跟随效果，因此不调用createMouseFollower()
+}
+
+// 创建鼠标跟随效果元素
+function createMouseFollower() {
+    // 只在大厅页面创建光晕效果
+    if (!document.body.classList.contains('lobby-page')) {
+        return;
+    }
+    
+    // 移除已存在的鼠标跟随元素
+    const existingFollowers = document.querySelectorAll('.mouse-follower');
+    existingFollowers.forEach(follower => follower.remove());
+    
+    // 创建光晕元素
+    const follower = document.createElement('div');
+    follower.className = 'mouse-follower';
+    follower.style.display = 'none'; // 初始隐藏光晕
+    
+    // 将光晕元素添加到页面body中
+    document.body.appendChild(follower);
+    
+    // 监听整个文档的鼠标移动事件
+    document.addEventListener('mousemove', (e) => {
+        follower.style.left = e.clientX + 'px';
+        follower.style.top = e.clientY + 'px';
+    });
+    
+    // 仅为按钮元素显示光晕
+    const buttons = document.querySelectorAll('.btn');
+    buttons.forEach(button => {
+        button.addEventListener('mouseenter', () => {
+            follower.style.display = 'block';
+        });
+        
+        button.addEventListener('mouseleave', () => {
+            follower.style.display = 'none';
+        });
+    });
 }
 
 // 初始化Socket连接
@@ -263,7 +308,16 @@ function initSocketConnection(roomId = null) {
         // 显示游戏状态
         const gameStatus = document.getElementById('game-status');
         if (gameStatus) {
-            gameStatus.textContent = `游戏进行中 - 黑棋: ${connectedUsers.get(blackPlayer)?.username || '玩家'}, 白棋: ${connectedUsers.get(whitePlayer)?.username || '玩家'}`;
+            // 修改: 根据当前玩家选择的颜色来显示"轮到你/对方"
+            if (blackPlayer === socket.id) {
+                selectedColor = 'black';
+                gameStatus.textContent = '轮到你下棋';
+            } else if (whitePlayer === socket.id) {
+                selectedColor = 'white';
+                gameStatus.textContent = '轮到你下棋';
+            } else {
+                gameStatus.textContent = '轮到对方下棋';
+            }
         }
         
         // 启用棋盘
@@ -279,7 +333,12 @@ function initSocketConnection(roomId = null) {
             if (win) {
                 gameStatus.textContent = `${username} 获胜！游戏结束`;
             } else {
-                gameStatus.textContent = `轮到${playerColors[data.player] === 'black' ? '白棋' : '黑棋'}下棋`;
+                // 修改: 根据当前玩家是否是自己来显示"轮到你/对方"
+                if (data.player === socket.id) {
+                    gameStatus.textContent = '轮到对方下棋';
+                } else {
+                    gameStatus.textContent = '轮到你下棋';
+                }
             }
         }
         

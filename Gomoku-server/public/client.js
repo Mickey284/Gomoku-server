@@ -48,3 +48,12 @@ function updateSelectedColorsInModal() {
         whiteButton.disabled = whiteTaken;
     }
 }
+
+// 快速开始功能
+function quickStart() {
+    if (socket) {
+        socket.emit('quick-start');
+    } else {
+        alert('请先连接到服务器');
+    }
+}

@@ -10,21 +10,27 @@
 <body>
     <div class="container">
         <header>
-            <div class="logo">多人游戏平台</div>
+            <div class="logo">在线五子棋</div>
             <div class="subtitle">游戏大厅</div>
         </header>
         
-        <div class="status-bar">
-            <div>
-                <span class="status-indicator"></span>
-                <span id="server-status">正在连接服务器...</span>
-            </div>
-        </div>
+
         
         <div class="main-content">
+            
             <div class="panel">
-                <h2 class="panel-title">创建房间</h2>
-                
+                <div class="panel-title-container">
+                    <h3 class="panel-title">快速开始</h3>
+                </div>
+                <div class="lobby-controls">
+
+                    <!-- 添加快速开始按钮 -->
+                    <button class="btn btn-primary" onclick="quickStart()">立即开始</button>
+                </div>
+            </div>
+
+            <div class="panel">
+                <h2 class="panel-title">创建房间</h2>               
                 <div class="lobby-controls">
                     <div class="room-input">
                         <input type="text" id="room-name-input" placeholder="输入房间名称...">
@@ -32,14 +38,7 @@
                     </div>
                 </div>
             </div>
-            
-            <div class="panel">
-                <h3 class="panel-title">快速开始</h3>
-                <div class="lobby-controls">
-                    <button class="btn btn-primary" onclick="quickStart()">快速开始</button>
-                </div>
-            </div>
-            
+        
             <div class="panel">
                 <h3 class="panel-title">可用房间</h3>
                 <div class="room-list" id="room-list">
@@ -52,12 +51,22 @@
                     </div>
                 </div>
             </div>
+
+            </div>
         </div>
-        
+
+
+
+        <div class="status-bar">
+            <div>
+                <span class="status-indicator"></span>
+                <span id="server-status">正在连接服务器...</span>
+            </div>
+        </div>
+
         <footer>
             <p>史诗级五子棋 &copy; 2025 | Mickey</p>
         </footer>
-    </div>
 
     <script src="client.js"></script>
     <script>

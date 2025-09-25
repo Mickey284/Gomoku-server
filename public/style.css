@@ -25,7 +25,7 @@ body {
     background-size: cover; /* 背景图片覆盖整个页面 */
     background-position: center; /* 背景图片居中 */
     background-repeat: no-repeat; /* 背景图片不重复 */
-    background-attachment: fixed; /* 背景图片固定不滚动 */
+    background-attachment: fixed; /* 背本图片固定不滚动 */
 }
 
 .container {
@@ -44,14 +44,14 @@ header {
   /* 添加磨砂质感 */
   backdrop-filter: blur(15px); /* 提高磨砂程度 从5px增加到15px */
   -webkit-backdrop-filter: blur(15px); /* 提高磨砂程度 从5px增加到15px */
-  background-color: rgba(44, 62, 80, 0.7);
+  background-color: rgba(123, 161, 199, 0.01);
 }
 
 .logo {
-  font-size: 2.5rem;
+  font-size: 6.5rem;
   font-weight: bold;
   margin-bottom: 10px;
-  color: var(--primary);
+  color:  rgba(255, 255, 255);
 }
 
 .subtitle {
@@ -66,10 +66,7 @@ header {
   padding: 15px 20px;
   color: white;
   font-size: 1.1rem;
-  /* 添加磨砂质感 */
-  backdrop-filter: blur(15px); /* 提高磨砂程度 从5px增加到15px */
-  -webkit-backdrop-filter: blur(15px); /* 提高磨砂程度 从5px增加到15px */
-  background-color: rgba(52, 73, 94, 0.7);
+  background-color: rgba(52, 73, 94, 0.01);
 }
 
 .status-indicator {
@@ -95,27 +92,71 @@ header {
     padding: 30px;
     min-height: 500px;
     background: rgba(255, 255, 255, 0.0); /* 改为完全透明背景 */
+    display: flex;
+    flex-direction: column;
+    gap: 25px;
+}
+
+/* 横屏时卡片并排显示 */
+@media (min-width: 768px) {
+    .main-content {
+        flex-direction: row;
+        justify-content: space-between;
+        gap: 20px; /* 设置卡片之间的间距 */
+    }
+
+    .panel {
+        flex: 1;
+        min-width: 300px; /* 设置最小宽度 */
+        max-width: calc(33.33% - 40px); /* 确保三张卡片并排且有间距 */
+    }
+}
+
+@media (max-width: 767px) {
+    .main-content {
+        flex-direction: column;
+    }
+    
+    .panel {
+        width: 100%;
+    }
 }
 
 .panel {
-    background: rgba(255, 255, 255, 0.3); /* 改为半透明背景 */
+    background: rgba(255, 255, 255, 0.3);
     border-radius: 10px;
     box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
     padding: 25px;
-    margin: 25px auto; /* 居中显示 */
-    max-width: 800px; /* 限制最大宽度 */
+    margin: 0 auto;
+    max-width: 800px;
     border: 1px solid rgba(255, 255, 255, 0.2);
-    /* 添加磨砂质感 */
-    backdrop-filter: blur(20px); /* 提高磨砂程度 从10px增加到20px */
-    -webkit-backdrop-filter: blur(20px); /* 提高磨砂程度 从10px增加到20px */
+    backdrop-filter: blur(20px);
+    -webkit-backdrop-filter: blur(20px);
+    display: flex;
+    flex-direction: column;
+    transition: transform 0.3s ease;
+    cursor: pointer;
+}
+
+.panel:hover {
+    transform: scale(1.05);
+    box-shadow: 0 6px 20px rgba(0, 0, 0, 0.2);
+}
+
+.panel-title-container {
+    height: 100%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
 }
 
 .panel-title {
-  font-size: 1.5rem;
-  margin-bottom: 20px;
-  padding-bottom: 15px;
-  border-bottom: 2px solid var(--light);
-  color: var(--dark);
+    font-size: 4rem; /* 增大字体大小以铺满卡片 */
+    margin-bottom: 0;
+    padding: 0;
+    color: var(--dark);
+    text-align: center;
+    width: 100%; /* 确保文字宽度占满卡片 */
 }
 
 .btn {
@@ -645,6 +686,8 @@ header {
   -webkit-backdrop-filter: blur(15px); /* 提高磨砂程度 从5px增加到15px */
 }
 
+/* 添加鼠标跟随的红色光晕效果 */
+
 /* 为房间页面也添加同样的背景样式 */
 .room-container {
     max-width: 1200px;
@@ -652,4 +695,18 @@ header {
     background-color: rgba(255, 255, 255, 0.0); /* 改为完全透明背景 */
     border-radius: 10px;
     box-shadow: 0 0 20px rgba(0, 0, 0, 0.3);
+}
+
+/* 仅在大厅页面应用光晕效果 */
+.lobby-page .mouse-follower {
+  position: fixed;
+  width: 30px;
+  height: 30px;
+  border-radius: 50%;
+  background: radial-gradient(circle, rgba(255, 0, 0, 0.8) 0%, rgba(255, 0, 0, 0.4) 50%, rgba(255, 0, 0, 0) 70%);
+  pointer-events: none;
+  transform: translate(-50%, -50%);
+  z-index: 9999;
+  box-shadow: 0 0 20px 10px rgba(255, 0, 0, 0.3);
+
 }
