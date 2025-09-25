@@ -1,8 +1,8 @@
 :root {
-  --primary: #3498db;
+  --primary: #3fa4e7c6;
   --success: #2ecc71;
   --warning: #f39c12;
-  --danger: #e74c3c;
+  --danger: #c94233;
   --dark: #2c3e50;
   --light: #ecf0f1;
   --room-bg: #f8f9fa;
@@ -17,19 +17,19 @@
 }
 
 body {
-  background: linear-gradient(135deg, #1a2a6c, #b21f1f, #fdbb2d);
-  color: #333;
-  min-height: 100vh;
-  padding: 20px;
+    background: linear-gradient(135deg, #ffffff, #786c6c, #5f5b5b); /* 更改为纯黑色背景 */
+    color: #333;
+    min-height: 100vh;
+    padding: 20px;
 }
 
 .container {
-  max-width: 1200px;
-  margin: 0 auto;
-  background: rgba(255, 255, 255, 0.95);
-  border-radius: 15px;
-  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
-  overflow: hidden;
+    max-width: 1200px;
+    margin: 0 auto;
+    background: rgba(255, 255, 255, 0.95); /* 保持容器为白色背景 */
+    border-radius: 15px;
+    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
+    overflow: hidden;
 }
 
 header {
@@ -80,16 +80,18 @@ header {
 }
 
 .main-content {
-  padding: 30px;
-  min-height: 500px;
+    padding: 30px;
+    min-height: 500px;
+    background: #ffffff; /* 房间背景改为白色 */
 }
 
 .panel {
-  background: white;
-  border-radius: 10px;
-  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
-  padding: 25px;
-  margin-bottom: 25px;
+    background: white;
+    border-radius: 10px;
+    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+    padding: 25px;
+    margin-bottom: 25px;
+    border: 1px solid #e1e8ed;
 }
 
 .panel-title {
@@ -169,16 +171,17 @@ header {
 }
 
 .room-item {
-  padding: 15px;
-  border-radius: 8px;
-  background: white;
-  margin-bottom: 10px;
-  box-shadow: 0 2px 5px rgba(0,0,0,0.05);
-  cursor: pointer;
-  transition: all 0.3s;
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
+    padding: 15px;
+    border-radius: 8px;
+    background: white; /* 保持房间项为白色背景 */
+    margin-bottom: 10px;
+    box-shadow: 0 2px 5px rgba(0,0,0,0.05);
+    cursor: pointer;
+    transition: all 0.3s;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    border: 1px solid #e1e8ed;
 }
 
 .room-item:hover {
